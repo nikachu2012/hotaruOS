@@ -1,8 +1,9 @@
+#include <Uefi.h>
+#include <Library/UefiLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <Library/UefiLib.h>
 #include <Protocol/LoadedImage.h>
-#include <Uefi.h>
+#include <Guid/FileInfo.h>
 
 EFI_STATUS openRootDir(IN EFI_HANDLE image_handle, OUT EFI_FILE_PROTOCOL **rootDir)
 {
@@ -119,9 +120,70 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
 
     // close file desc
     memmapFile->Close(memmapFile);
+    Print(L"memoryMap wrote.\n");
 
-    Print(L"memoryMap wrote.");
+    Print(L"Loading kernel...\n");
 
+    // Load kernel
+    EFI_FILE_PROTOCOL *kernelFile;
+    rootDir->Open(rootDir, &kernelFile, L"\\kernel.elf", EFI_FILE_MODE_READ, 0);
+
+    UINTN fileInfoSize = sizeof(EFI_FILE_INFO) + sizeof(CHAR16) * 12;
+    UINT8 fileInfoBuffer[fileInfoSize];
+
+    kernelFile->GetInfo(kernelFile, &gEfiFileInfoGuid, &fileInfoSize, fileInfoBuffer);
+    EFI_FILE_INFO *fileInfo = (EFI_FILE_INFO *)fileInfoBuffer;
+    UINTN kernelFileSize = fileInfo->FileSize;
+
+    EFI_PHYSICAL_ADDRESS kernelBaseAddress = 0x100000;
+
+    // ベースアドレスから kernelFileSize / EFI_PAGE_SIZE の切り上げ分のメモリを確保
+    gBS->AllocatePages(AllocateAddress, EfiLoaderData, (kernelFileSize + 0xfff) / 0x1000, &kernelBaseAddress);
+
+    kernelFile->Read(kernelFile, &kernelFileSize, (VOID *)kernelBaseAddress);
+    Print(L"Kernel loaded!\nKernel address: 0x%0llx, size: %llu bytes\n", kernelBaseAddress, kernelFileSize);
+
+    // EFIブートサービスを終了
+    EFI_STATUS status;
+    status = gBS->ExitBootServices(image_handle, memoryMapKey);
+
+    if (EFI_ERROR(status))
+    {
+        // もう一度メモリマップの取得
+        // (ブートサービスを終了するにはメモリマップのキーが最新に近いものでなければならない)
+        memoryMapSize = sizeof(memoryMap);
+        status = gBS->GetMemoryMap(&memoryMapSize, memoryMap, &memoryMapKey, &descriptorSize,
+                                   &descriptorVersion);
+        if (EFI_ERROR(status))
+        {
+            Print(L"Failed to get memory map. (status: %r)\n", status);
+            while (1)
+                ;
+        }
+
+        status = gBS->ExitBootServices(image_handle, memoryMapKey);
+        if (EFI_ERROR(status))
+        {
+            Print(L"Could not exit boot service. (status: %r)\n", status);
+            while (1)
+                ;
+        }
+    }
+
+    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+
+    // Open Graphic Output Protocol(GOP)
+
+    // カーネルの起動
+    // エントリポイントのアドレスを取得
+    UINT64 entryAddress = *(UINT64 *)(kernelBaseAddress + 24);
+
+    // 関数プロトタイプを作ってメモリのアドレスから関数を実行
+    typedef void EntryPointType(void);
+    EntryPointType *entryPoint = (EntryPointType *)entryAddress;
+    entryPoint();
+
+    Print(L"ALL DONE\n");
     while (1)
         ;
 
