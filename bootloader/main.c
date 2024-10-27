@@ -4,6 +4,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/LoadedImage.h>
 #include <Guid/FileInfo.h>
+#include <Library/MemoryAllocationLib.h>
 
 EFI_STATUS openRootDir(IN EFI_HANDLE image_handle, OUT EFI_FILE_PROTOCOL **rootDir)
 {
@@ -61,6 +62,50 @@ const CHAR16 *memoryTypeToString(EFI_MEMORY_TYPE type)
         return L"EfiMaxMemoryType";
     default:
         return L"InvalidMemoryType";
+    }
+}
+
+EFI_STATUS openGOP(EFI_HANDLE image_handle, EFI_GRAPHICS_OUTPUT_PROTOCOL **gop)
+{
+    UINTN numGopHandles = 0;
+    EFI_HANDLE *gopHandles = NULL;
+
+    gBS->LocateHandleBuffer(
+        ByProtocol,
+        &gEfiGraphicsOutputProtocolGuid,
+        NULL,
+        &numGopHandles,
+        &gopHandles);
+
+    gBS->OpenProtocol(
+        gopHandles[0],
+        &gEfiGraphicsOutputProtocolGuid,
+        (VOID **)gop,
+        image_handle,
+        NULL,
+        EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+
+    FreePool(gopHandles);
+
+    return EFI_SUCCESS;
+}
+
+const CHAR16 *pixelFormatToString(EFI_GRAPHICS_PIXEL_FORMAT fmt)
+{
+    switch (fmt)
+    {
+    case PixelRedGreenBlueReserved8BitPerColor:
+        return L"PixelRedGreenBlueReserved8BitPerColor";
+    case PixelBlueGreenRedReserved8BitPerColor:
+        return L"PixelBlueGreenRedReserved8BitPerColor";
+    case PixelBitMask:
+        return L"PixelBitMask";
+    case PixelBltOnly:
+        return L"PixelBltOnly";
+    case PixelFormatMax:
+        return L"PixelFormatMax";
+    default:
+        return L"InvalidPixelFormat";
     }
 }
 
@@ -143,6 +188,24 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
     kernelFile->Read(kernelFile, &kernelFileSize, (VOID *)kernelBaseAddress);
     Print(L"Kernel loaded!\nKernel address: 0x%0llx, size: %llu bytes\n", kernelBaseAddress, kernelFileSize);
 
+    // Open Graphic Output Protocol(GOP)
+    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+    openGOP(image_handle, &gop);
+
+    UINT8 *frameBuffer = (UINT8 *)gop->Mode->FrameBufferBase;
+
+    // フレームバッファの書き換え
+    for (UINTN i = 0; i < gop->Mode->FrameBufferSize; i++)
+    {   
+        frameBuffer[i] = 0xff;
+    }
+
+    Print(L"Resolution: %ux%u, Pixel format: %ls, %u pixels/line\n",
+          gop->Mode->Info->HorizontalResolution,
+          gop->Mode->Info->VerticalResolution,
+          pixelFormatToString(gop->Mode->Info->PixelFormat),
+          gop->Mode->Info->PixelsPerScanLine);
+
     // EFIブートサービスを終了
     EFI_STATUS status;
     status = gBS->ExitBootServices(image_handle, memoryMapKey);
@@ -169,10 +232,6 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
                 ;
         }
     }
-
-    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
-
-    // Open Graphic Output Protocol(GOP)
 
     // カーネルの起動
     // エントリポイントのアドレスを取得
