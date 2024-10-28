@@ -272,13 +272,7 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
     openGOP(image_handle, &gop);
 
-    UINT8 *frameBuffer = (UINT8 *)gop->Mode->FrameBufferBase;
 
-    // フレームバッファの書き換え
-    for (UINTN i = 0; i < gop->Mode->FrameBufferSize; i++)
-    {   
-        frameBuffer[i] = 0xff;
-    }
 
     Print(L"Resolution: %ux%u, Pixel format: %ls, %u pixels/line\n",
           gop->Mode->Info->HorizontalResolution,
