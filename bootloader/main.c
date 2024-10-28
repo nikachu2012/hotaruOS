@@ -5,6 +5,9 @@
 #include <Protocol/LoadedImage.h>
 #include <Guid/FileInfo.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/BaseMemoryLib.h>
+
+#include "elf.hpp"
 
 EFI_STATUS openRootDir(IN EFI_HANDLE image_handle, OUT EFI_FILE_PROTOCOL **rootDir)
 {
@@ -109,6 +112,29 @@ const CHAR16 *pixelFormatToString(EFI_GRAPHICS_PIXEL_FORMAT fmt)
     }
 }
 
+void Halt(void)
+{
+    while (1)
+        __asm__("hlt");
+}
+
+void CalcLoadAddressRange(Elf64_Ehdr *fileHeader, UINT64 *first, UINT64 *last)
+{
+    Elf64_Phdr *programHeaderArray = (Elf64_Phdr *)((VOID *)fileHeader + fileHeader->e_phoff);
+
+    *first = MAX_UINT64; // 最小値を求めるために最大値にする
+    *last = 0;           // 最大値を求めるために最小値にする
+
+    for (Elf64_Half i = 0; i < fileHeader->e_phnum; i++)
+    {
+        if (programHeaderArray[i].p_type != PT_LOAD)
+            continue;
+
+        *first = MIN(*first, programHeaderArray[i].p_vaddr);
+        *last = MAX(*last, programHeaderArray[i].p_vaddr + programHeaderArray[i].p_memsz);
+    }
+}
+
 EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
                            EFI_SYSTEM_TABLE *system_table)
 {
@@ -170,6 +196,8 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
     Print(L"Loading kernel...\n");
 
     // Load kernel
+    EFI_STATUS status;
+
     EFI_FILE_PROTOCOL *kernelFile;
     rootDir->Open(rootDir, &kernelFile, L"\\kernel.elf", EFI_FILE_MODE_READ, 0);
 
@@ -180,13 +208,65 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
     EFI_FILE_INFO *fileInfo = (EFI_FILE_INFO *)fileInfoBuffer;
     UINTN kernelFileSize = fileInfo->FileSize;
 
-    EFI_PHYSICAL_ADDRESS kernelBaseAddress = 0x100000;
+    // カーネル保存用の一時領域を確保
+    VOID *kernelBuffer;
+    status = gBS->AllocatePool(EfiLoaderData, kernelFileSize, &kernelBuffer);
+    if (EFI_ERROR(status))
+    {
+        Print(L"Failed to allocate pool: %r\n", status);
+        Halt();
+    }
 
-    // ベースアドレスから kernelFileSize / EFI_PAGE_SIZE の切り上げ分のメモリを確保
-    gBS->AllocatePages(AllocateAddress, EfiLoaderData, (kernelFileSize + 0xfff) / 0x1000, &kernelBaseAddress);
+    status = kernelFile->Read(kernelFile, &kernelFileSize, kernelBuffer);
+    if (EFI_ERROR(status))
+    {
+        Print(L"File load error: %r\n", status);
+        Halt();
+    }
 
-    kernelFile->Read(kernelFile, &kernelFileSize, (VOID *)kernelBaseAddress);
-    Print(L"Kernel loaded!\nKernel address: 0x%0llx, size: %llu bytes\n", kernelBaseAddress, kernelFileSize);
+    Elf64_Ehdr *kernelFileHeader = (Elf64_Ehdr *)kernelBuffer;
+    UINT64 kernelFirstAddr, kernelLastAddr;
+
+    Elf64_Phdr *kernelProgramHeaderArray = ((Elf64_Phdr *)((UINT64)kernelFileHeader + kernelFileHeader->e_phoff));
+    CalcLoadAddressRange(kernelFileHeader, &kernelFirstAddr, &kernelLastAddr);
+
+    Print(L"Kernel address: 0x%08llx - 0x%08llx\n", kernelFirstAddr, kernelLastAddr);
+
+    // ページ数の計算 (ファイル全体のバイト数 / 4KiB の切り上げ)
+    UINTN pages = (kernelLastAddr - kernelFirstAddr + (EFI_PAGE_SIZE - 1)) / EFI_PAGE_SIZE;
+    status = gBS->AllocatePages(AllocateAddress, EfiLoaderData, pages, &kernelFirstAddr); // 実際指定した番地(0x100000)にカーネルを配置
+    if (EFI_ERROR(status))
+    {
+        Print(L"Failed to allocate pages: %r\n", status);
+        Halt();
+    }
+
+    // copy segments
+    for (Elf64_Half i = 0; i < kernelFileHeader->e_phnum; ++i)
+    {
+        if (kernelProgramHeaderArray[i].p_type != PT_LOAD)
+            continue;
+
+        UINT64 segmentInFile = (UINT64)kernelFileHeader + kernelProgramHeaderArray[i].p_offset;
+        CopyMem((VOID *)kernelProgramHeaderArray[i].p_vaddr,
+                (VOID *)segmentInFile,
+                kernelProgramHeaderArray[i].p_filesz);
+
+        UINTN remainBytes = kernelProgramHeaderArray[i].p_memsz - kernelProgramHeaderArray[i].p_filesz;
+        SetMem((VOID *)kernelProgramHeaderArray[i].p_vaddr + kernelProgramHeaderArray[i].p_filesz,
+               remainBytes,
+               0);
+    }
+
+    Print(L"Kernel loaded!\n");
+
+    // 確保した一時領域を開放
+    status = gBS->FreePool(kernelBuffer);
+    if (EFI_ERROR(status))
+    {
+        Print(L"Failed to free pool: %r\n", status);
+        Halt();
+    }
 
     // Open Graphic Output Protocol(GOP)
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
@@ -235,12 +315,13 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
 
     // カーネルの起動
     // エントリポイントのアドレスを取得
-    UINT64 entryAddress = *(UINT64 *)(kernelBaseAddress + 24);
+    UINT64 entryAddress = *(UINT64 *)(kernelFirstAddr + 24);
 
     // 関数プロトタイプを作ってメモリのアドレスから関数を実行
-    typedef void EntryPointType(void);
-    EntryPointType *entryPoint = (EntryPointType *)entryAddress;
-    entryPoint();
+    // System V AMD64 ABIの形式に固定して引数を渡す (CLANGPDBでコンパイルするとき)
+    typedef void __attribute__((sysv_abi)) EntryPointType(UINT64, UINT64);
+    EntryPointType *entry_point = (EntryPointType *)entryAddress;
+    entry_point(gop->Mode->FrameBufferBase, gop->Mode->FrameBufferSize);
 
     Print(L"ALL DONE\n");
     while (1)
