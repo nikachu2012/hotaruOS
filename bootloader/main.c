@@ -286,8 +286,12 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
           pixelFormatToString(gop->Mode->Info->PixelFormat),
           gop->Mode->Info->PixelsPerScanLine);
 
+    Print(L"Framebuffer: 0x%0llx - 0x%0llx, size: %lu bytes\n",
+          gop->Mode->FrameBufferBase,
+          gop->Mode->FrameBufferBase + gop->Mode->FrameBufferSize,
+          gop->Mode->FrameBufferSize);
+
     // EFIブートサービスを終了
-    EFI_STATUS status;
     status = gBS->ExitBootServices(image_handle, memoryMapKey);
 
     if (EFI_ERROR(status))
