@@ -139,7 +139,7 @@ void CalcLoadAddressRange(Elf64_Ehdr *fileHeader, UINT64 *first, UINT64 *last)
 EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
                            EFI_SYSTEM_TABLE *system_table)
 {
-    Print(L"hotaruOS by nikachu2012\n");
+    Print(L"hotaruOS Bootloader alpha1.0 by nikachu2012\n");
 
     EFI_MEMORY_DESCRIPTOR memoryMap[500]; // 40 * 500 bytes
     UINTN memoryMapKey, descriptorSize, memoryMapSize = sizeof(memoryMap);
