@@ -1,6 +1,6 @@
 TARGET = kernel.elf
 
-OBJS = main.o
+OBJS = main.o serial/serial.o
 
 CXXFLAGS += -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17
 LDFLAGS += --entry kernelMain -z norelro --image-base 0x100000 --static
@@ -10,11 +10,11 @@ all: $(TARGET)
 
 .PHONY: clean
 clean: 
-	rm -rf *.o
+	rm -rf **/*.o
 
 kernel.elf: $(OBJS)
 	ld.lld $(LDFLAGS) -o $@ $(OBJS)
 
 %.o: %.cpp
-	clang++ $(CPPFLAGS) $(CXXFLAGS) -c $<
+	clang++ $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
