@@ -1,4 +1,6 @@
 # コンパイル方法
+Written by nikachu2012 
+
 ## ソースコードの取得
 ```
 git clone https://github.com/nikachu2012/hotaruOS
