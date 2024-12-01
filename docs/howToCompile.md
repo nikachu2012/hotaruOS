@@ -92,7 +92,7 @@ Build total time: 00:00:01
 以下のコマンドで実行できる。
 ```bash
 $ cd /path/to/hotaruOS/kernel
-$ source ../tools/buildenv.sh
+$ source ../script/buildenv.sh
 $ make
 ```
 
