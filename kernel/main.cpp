@@ -42,7 +42,7 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
         Halt();
     }
 
-    const char *str = "\nThis is kernel...\nhotaruOS Kernel by nikachu2012\n";
+    const char *str = "\r\nThis is kernel...\r\nhotaruOS Kernel by nikachu2012\r\n";
     serialPutString(str, PORT_COM1);
 
     switch (frameBufferConfig.pixelFormat)
