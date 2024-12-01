@@ -7,6 +7,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
 
+#include "frameBufferConfig.hpp"
 #include "elf.hpp"
 
 EFI_STATUS openRootDir(IN EFI_HANDLE image_handle, OUT EFI_FILE_PROTOCOL **rootDir)
@@ -272,8 +273,6 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
     openGOP(image_handle, &gop);
 
-
-
     Print(L"Resolution: %ux%u, Pixel format: %ls, %u pixels/line\n",
           gop->Mode->Info->HorizontalResolution,
           gop->Mode->Info->VerticalResolution,
@@ -315,15 +314,35 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
     // エントリポイントのアドレスを取得
     UINT64 entryAddress = *(UINT64 *)(kernelFirstAddr + 24);
 
+    struct frameBufferConfig config =
+        {(UINT8 *)gop->Mode->FrameBufferBase,
+         gop->Mode->Info->PixelsPerScanLine,
+         gop->Mode->Info->HorizontalResolution,
+         gop->Mode->Info->VerticalResolution,
+         PixelFormat_undefined};
+
+    switch (gop->Mode->Info->PixelFormat)
+    {
+    case PixelRedGreenBlueReserved8BitPerColor:
+        config.pixelFormat = PixelFormat_RGBResv8BitPerColor;
+        break;
+    case PixelBlueGreenRedReserved8BitPerColor:
+        config.pixelFormat = PixelFormat_BGRResv8BitPerColor;
+        break;
+    default:
+        Print(L"!!!!ERRROR!!!! Unimplemented pixel format: %s\n", pixelFormatToString(gop->Mode->Info->PixelFormat));
+        Halt();
+        break;
+    }
+
     // 関数プロトタイプを作ってメモリのアドレスから関数を実行
     // System V AMD64 ABIの形式に固定して引数を渡す (CLANGPDBでコンパイルするとき)
-    typedef void __attribute__((sysv_abi)) EntryPointType(UINT64, UINT64);
+    typedef void __attribute__((sysv_abi)) EntryPointType(const struct frameBufferConfig *);
     EntryPointType *entry_point = (EntryPointType *)entryAddress;
-    entry_point(gop->Mode->FrameBufferBase, gop->Mode->FrameBufferSize);
+    entry_point(&config);
 
     Print(L"ALL DONE\n");
-    while (1)
-        ;
+    Halt();
 
     return EFI_SUCCESS;
 }
