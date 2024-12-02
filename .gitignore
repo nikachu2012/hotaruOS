@@ -3,3 +3,5 @@ workspace/
 
 *.o
 *.elf
+
+tools/*/.venv
