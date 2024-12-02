@@ -10,6 +10,7 @@
 #include "serial/serial.hpp"
 #include "graphics/frameBufferConfig.hpp"
 #include "graphics/pixelWriter.hpp"
+#include "font/font.hpp"
 
 void Halt()
 {
@@ -71,6 +72,10 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
             pixelWriter->write(x, y, {0x00, 0x00, 0xff});
         }
     }
+
+    writeChar(*pixelWriter, 100, 100, 'a', {0x0, 0x0, 0x0});
+    writeChar(*pixelWriter, 108, 100, 'a', {0x0, 0x0, 0x0});
+    writeChar(*pixelWriter, 100, 116, 'a', {0x0, 0x0, 0x0});
 
     Halt();
 }
