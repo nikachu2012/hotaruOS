@@ -1,15 +1,29 @@
 #include "font.hpp"
 
+extern const uint8_t _binary_ProggyClean_bin_start;
+extern const uint8_t _binary_ProggyClean_bin_end;
+extern const uint8_t _binary_ProggyClean_bin_size;
+
+const uint8_t *getFont(char c)
+{
+    auto index = FONT_HEIGHT * static_cast<size_t>(c);
+
+    if (index >= reinterpret_cast<uintptr_t>(&_binary_ProggyClean_bin_size))
+    {
+        return nullptr;
+    }
+
+    return &_binary_ProggyClean_bin_start + index;
+}
+
 void writeChar(PixelWriter &writer, int x, int y, char c, const PixelTrueColor &color)
 {
-    if (c != 'a')
-        return;
-
-    for (int dx = 0; dx < FONT_WIDTH; dx++)
-    {
+    const uint8_t *font_bitmap = getFont(c);
         for (int dy = 0; dy < FONT_HEIGHT; dy++)
         {
-            if ((FONT_A[dy] << dx) & 0x80u)
+        for (int dx = 0; dx < FONT_WIDTH; dx++)
+        {
+            if ((font_bitmap[dy] << dx) & 0x40u)
             {
                 writer.write(x + dx, y + dy, color);
             }
