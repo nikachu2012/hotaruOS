@@ -19,8 +19,8 @@ const uint8_t *getFont(char c)
 void writeChar(PixelWriter &writer, int x, int y, char c, const PixelTrueColor &color)
 {
     const uint8_t *font_bitmap = getFont(c);
-        for (int dy = 0; dy < FONT_HEIGHT; dy++)
-        {
+    for (int dy = 0; dy < FONT_HEIGHT; dy++)
+    {
         for (int dx = 0; dx < FONT_WIDTH; dx++)
         {
             if ((font_bitmap[dy] << dx) & 0x40u)
@@ -28,5 +28,13 @@ void writeChar(PixelWriter &writer, int x, int y, char c, const PixelTrueColor &
                 writer.write(x + dx, y + dy, color);
             }
         }
+    }
+}
+
+void writeString(PixelWriter &writer, int x, int y, const char *s, const PixelTrueColor &color)
+{
+    for (size_t i = 0; i < s[i] != '\0'; i++)
+    {
+        writeChar(writer, x + FONT_WIDTH * i, y, s[i], color);
     }
 }

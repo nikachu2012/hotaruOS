@@ -69,13 +69,13 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
     {
         for (int y = 100; y < 100 + 100; y++)
         {
-            pixelWriter->write(x, y, {0x00, 0x00, 0xff});
+            pixelWriter->write(x, y, {0xdc, 0xdc, 0xdc});
         }
     }
 
-    writeChar(*pixelWriter, 100, 100, 'a', {0x0, 0x0, 0x0});
-    writeChar(*pixelWriter, 108, 100, 'a', {0x0, 0x0, 0x0});
-    writeChar(*pixelWriter, 100, 116, 'a', {0x0, 0x0, 0x0});
+    writeString(*pixelWriter, 5, 3, "hotaruOS", {0x0, 0x0, 0x0});
+
+    writeString(*pixelWriter, 150, 100, "Dengen iretara BASICaa", {0x0, 0x0, 0x0});
 
     Halt();
 }
