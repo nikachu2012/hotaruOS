@@ -7,6 +7,7 @@
  *
  */
 #include <cstdint>
+#include <cstdio>
 #include "serial/serial.hpp"
 #include "graphics/frameBufferConfig.hpp"
 #include "graphics/pixelWriter.hpp"
@@ -75,7 +76,9 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
 
     writeString(*pixelWriter, 5, 3, "hotaruOS", {0x0, 0x0, 0x0});
 
-    writeString(*pixelWriter, 150, 100, "Dengen iretara BASICaa", {0x0, 0x0, 0x0});
+    char buf[256];
+    snprintf(buf, 256, "1 + 2 = %d", 3);
+    writeString(*pixelWriter, 0, 200, buf, {0, 0, 0});
 
     Halt();
 }
