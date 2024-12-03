@@ -1,6 +1,8 @@
 # コンパイル方法
 Written by nikachu2012 
 
+EDK2は`~/workspace/edk2`に、標準ライブラリは`~/workspace/x86_64-elf`に配置すると、各種シェルスクリプトを変更無しで利用できるのでおすすめ
+
 ## ソースコードの取得
 ```
 git clone https://github.com/nikachu2012/hotaruOS
@@ -97,3 +99,9 @@ $ make
 ```
 
 `/path/to/hotaruOS/kernel`の中に`kernel.elf`が生成される。
+
+## シェルスクリプトのパスを指定
+付属しているシェルスクリプトを使用する場合は、パスの設定が必要。
+EDK2は`~/workspace/edk2`に、標準ライブラリは`~/workspace/x86_64-elf`に配置していない場合は以下の操作が必要になる。
+
+- `script/build_bootloader.sh`の`EDK2DIR`変数を正しいパスに設定する。
