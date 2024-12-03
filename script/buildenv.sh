@@ -1,3 +1,4 @@
+#!/bin/sh
 # Usage: source buildenv.sh
 
 BASEDIR="$HOME/workspace/x86_64-elf"
