@@ -33,7 +33,7 @@ void writeChar(PixelWriter &writer, int x, int y, char c, const PixelTrueColor &
 
 void writeString(PixelWriter &writer, int x, int y, const char *s, const PixelTrueColor &color)
 {
-    for (size_t i = 0; i < s[i] != '\0'; i++)
+    for (size_t i = 0; s[i] != 0; i++)
     {
         writeChar(writer, x + FONT_WIDTH * i, y, s[i], color);
     }
