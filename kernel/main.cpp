@@ -74,7 +74,7 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
         }
     }
 
-    writeString(*pixelWriter, 5, 3, "hotaruOS", {0x0, 0x0, 0x0});
+    writeString(*pixelWriter, 5, 3, "hotaruOS  File  Edit  View  Label  Special", {0x0, 0x0, 0x0});
 
     char buf[256];
     snprintf(buf, 256, "1 + 2 = %d", 3);
