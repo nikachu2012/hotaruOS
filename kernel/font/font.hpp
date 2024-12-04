@@ -13,7 +13,7 @@
  * @param c 文字
  * @return const uint8_t* フォントデータ (FONT_WIDTH x FONT_HEIGHTサイズ)
  */
-const uint8_t *getFont(char c);
+const inline uint8_t *getFont(char c);
 
 /**
  * @brief 1文字を指定座標に出力

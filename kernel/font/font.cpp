@@ -2,16 +2,11 @@
 
 extern const uint8_t _binary_ProggyClean_bin_start;
 extern const uint8_t _binary_ProggyClean_bin_end;
-extern const uint8_t _binary_ProggyClean_bin_size;
+extern const size_t _binary_ProggyClean_bin_size;
 
 const uint8_t *getFont(char c)
 {
-    auto index = FONT_HEIGHT * static_cast<size_t>(c);
-
-    if (index >= reinterpret_cast<uintptr_t>(&_binary_ProggyClean_bin_size))
-    {
-        return nullptr;
-    }
+    uint64_t index = FONT_HEIGHT * c;
 
     return &_binary_ProggyClean_bin_start + index;
 }
