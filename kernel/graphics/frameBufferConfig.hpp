@@ -19,7 +19,7 @@ enum pixelFormat
 
 struct frameBufferConfig
 {
-    uint8_t *frameBuffer;
+    uint32_t *frameBuffer;
     uint32_t pixelPerScanLine;
     uint32_t widthResolution;  // 画面の横幅
     uint32_t heightResolution; // 画面の縦幅

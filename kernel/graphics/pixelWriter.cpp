@@ -1,27 +1,53 @@
 #include "pixelWriter.hpp"
 
-void RGBResv8BitPerColorPixelWriter::write(int x, int y, const PixelTrueColor &c)
+constexpr uint32_t RGBResv8BitColorGen(const PixelTrueColor &c)
 {
-    auto p = getPixelIndex(x, y);
-    p[0] = c.r;
-    p[1] = c.g;
-    p[2] = c.b;
+    return (c.b << 16) | (c.g << 8) | c.r;
 }
 
-uint8_t *RGBResv8BitPerColorPixelWriter::getPixelIndex(int x, int y)
+constexpr uint32_t BGRResv8BitColorGen(const PixelTrueColor &c)
 {
-    return config_.frameBuffer + 4 * (config_.pixelPerScanLine * y + x);
+    return (c.r << 16) | (c.g << 8) | c.b;
 }
 
-void BGRResv8BitPerColorPixelWriter::write(int x, int y, const PixelTrueColor &c)
+void RGBResv8BitPerColorPixelWriter::writePixel(int x, int y, const PixelTrueColor &c)
 {
-    auto p = getPixelIndex(x, y);
-    p[0] = c.b;
-    p[1] = c.g;
-    p[2] = c.r;
+    auto p = config_.frameBuffer + (config_.pixelPerScanLine * y + x);
+
+    *p = RGBResv8BitColorGen(c);
 }
 
-uint8_t *BGRResv8BitPerColorPixelWriter::getPixelIndex(int x, int y)
+void RGBResv8BitPerColorPixelWriter::writeRect(int x, int y, int width, int height, const PixelTrueColor &c)
 {
-    return config_.frameBuffer + 4 * (config_.pixelPerScanLine * y + x);
+    auto color = RGBResv8BitColorGen(c);
+
+    for (size_t dy = 0; dy < height; dy++)
+    {
+        auto startptr = config_.frameBuffer + (config_.pixelPerScanLine * dy + x);
+        for (size_t dx = 0; dx < width; dx++)
+        {
+            startptr[dx] = color;
+        }
+    }
+}
+
+void BGRResv8BitPerColorPixelWriter::writePixel(int x, int y, const PixelTrueColor &c)
+{
+    auto p = config_.frameBuffer + (config_.pixelPerScanLine * y + x);
+
+    *p = BGRResv8BitColorGen(c);
+}
+
+void BGRResv8BitPerColorPixelWriter::writeRect(int x, int y, int width, int height, const PixelTrueColor &c)
+{
+    auto color = BGRResv8BitColorGen(c);
+
+    for (size_t dy = y; dy < y + height; dy++)
+    {
+        auto startptr = config_.frameBuffer + (config_.pixelPerScanLine * dy + x);
+        for (size_t dx = 0; dx < width; dx++)
+        {
+            startptr[dx] = color;
+        }
+    }
 }

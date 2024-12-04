@@ -315,7 +315,7 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle,
     UINT64 entryAddress = *(UINT64 *)(kernelFirstAddr + 24);
 
     struct frameBufferConfig config =
-        {(UINT8 *)gop->Mode->FrameBufferBase,
+        {(UINT32 *)gop->Mode->FrameBufferBase,
          gop->Mode->Info->PixelsPerScanLine,
          gop->Mode->Info->HorizontalResolution,
          gop->Mode->Info->VerticalResolution,

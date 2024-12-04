@@ -80,21 +80,8 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
 
     console = new (consoleBuf) Console(*pixelWriter, {0, 0, 0}, {0xff, 0xff, 0xff});
 
-    for (int x = 0; x < frameBufferConfig.widthResolution; x++)
-    {
-        for (int y = 0; y < frameBufferConfig.heightResolution; y++)
-        {
-            pixelWriter->write(x, y, {0xff, 0xff, 0xff});
-        }
-    }
-
-    for (int x = 100; x < 100 + 200; x++)
-    {
-        for (int y = 100; y < 100 + 100; y++)
-        {
-            pixelWriter->write(x, y, {0xdc, 0xdc, 0xdc});
-        }
-    }
+    pixelWriter->writeRect(0, 0, frameBufferConfig.widthResolution, frameBufferConfig.heightResolution, {0, 0xff, 0});
+    pixelWriter->writeRect(100, 100, 200, 100, {0xdc, 0xdc, 0xdc});
 
     // writeString(*pixelWriter, 5, 3, "hotaruOS  File  Edit  View  Label  Special", {0x0, 0x0, 0x0});
 

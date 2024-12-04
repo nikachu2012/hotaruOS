@@ -1,6 +1,34 @@
 #pragma once
 
+#include <cstddef>
 #include "frameBufferConfig.hpp"
+
+/**
+ * @brief RGBResv8BitColorで１ピクセル分の色データの作成
+ *
+ * FORMAT
+ * MSB       LSB
+ * |Re|B |G |R |
+ * |8 |8 |8 |8 |(bit)
+
+ *
+ * @param c
+ * @return * constexpr uint32_t
+ */
+constexpr uint32_t RGBResv8BitColorGen(const PixelTrueColor &c);
+
+/**
+ * @brief BGRResv8BitColorで１ピクセル分の色データの作成
+ *
+ * FORMAT
+ * MSB       LSB
+ * |Re|R |G |B |
+ * |8 |8 |8 |8 |(bit)
+ *
+ * @param c
+ * @return * constexpr uint32_t
+ */
+constexpr uint32_t BGRResv8BitColorGen(const PixelTrueColor &c);
 
 /**
  * @brief 24ビットカラーの色を扱う
@@ -36,17 +64,10 @@ public:
      * @param y y座標
      * @param c 色
      */
-    virtual void write(int x, int y, const PixelTrueColor &c) = 0;
+    virtual void writePixel(int x, int y, const PixelTrueColor &c) = 0;
+    virtual void writeRect(int x, int y, int width, int height, const PixelTrueColor &c) = 0;
 
 protected:
-    /**
-     * @brief 座標から実際のメモリ上のアドレスを計算
-     *
-     * @param x x座標
-     * @param y y座標
-     * @return uint8_t* 座標に対応するフレームバッファ上のアドレス
-     */
-    virtual uint8_t *getPixelIndex(int x, int y) = 0;
     const frameBufferConfig &config_;
 };
 
@@ -57,10 +78,8 @@ class RGBResv8BitPerColorPixelWriter : public PixelWriter
 {
 public:
     using PixelWriter::PixelWriter;
-    void write(int x, int y, const PixelTrueColor &c) override;
-
-protected:
-    uint8_t *getPixelIndex(int x, int y) override;
+    void writePixel(int x, int y, const PixelTrueColor &c) override;
+    void writeRect(int x, int y, int width, int height, const PixelTrueColor &c) override;
 };
 
 /**
@@ -70,8 +89,6 @@ class BGRResv8BitPerColorPixelWriter : public PixelWriter
 {
 public:
     using PixelWriter::PixelWriter;
-    void write(int x, int y, const PixelTrueColor &c) override;
-
-protected:
-    uint8_t *getPixelIndex(int x, int y) override;
+    void writePixel(int x, int y, const PixelTrueColor &c) override;
+    void writeRect(int x, int y, int width, int height, const PixelTrueColor &c) override;
 };
