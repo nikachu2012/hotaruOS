@@ -80,8 +80,8 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
 
     console = new (consoleBuf) Console(*pixelWriter, {0, 0, 0}, {0xff, 0xff, 0xff});
 
-    pixelWriter->writeRect(0, 0, frameBufferConfig.widthResolution, frameBufferConfig.heightResolution, {0, 0xff, 0});
-    pixelWriter->writeRect(100, 100, 200, 100, {0xdc, 0xdc, 0xdc});
+    pixelWriter->writeRectWithFill(0, 0, frameBufferConfig.widthResolution, frameBufferConfig.heightResolution, {0, 0xff, 0});
+    pixelWriter->writeRectWithFill(100, 100, 200, 100, {0xdc, 0xdc, 0xdc});
 
     // writeString(*pixelWriter, 5, 3, "hotaruOS  File  Edit  View  Label  Special", {0x0, 0x0, 0x0});
 
@@ -93,6 +93,8 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
     {
         printk("line: %d test", i);
     }
+
+    pixelWriter->drawRect(99, 99, 25 * 7 + 1, 12 * 13 + 1, {0xff, 0, 0});
 
     Halt();
 }

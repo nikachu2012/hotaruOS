@@ -65,7 +65,28 @@ public:
      * @param c 色
      */
     virtual void writePixel(int x, int y, const PixelTrueColor &c) = 0;
-    virtual void writeRect(int x, int y, int width, int height, const PixelTrueColor &c) = 0;
+
+    /**
+     * @brief 枠線のみの四角形を書く関数
+     *
+     * @param x 四角形左上のx座標
+     * @param y 四角形左上のy座標
+     * @param width 四角形の横幅
+     * @param height 四角形の縦幅
+     * @param c 色
+     */
+    virtual void drawRect(int x, int y, int width, int height, const PixelTrueColor &c) = 0;
+
+    /**
+     * @brief 中が埋められた四角形を書く関数
+     *
+     * @param x 四角形左上のx座標
+     * @param y 四角形左上のy座標
+     * @param width 四角形の横幅
+     * @param height 四角形の縦幅
+     * @param c 色
+     */
+    virtual void writeRectWithFill(int x, int y, int width, int height, const PixelTrueColor &c) = 0;
 
 protected:
     const frameBufferConfig &config_;
@@ -79,7 +100,8 @@ class RGBResv8BitPerColorPixelWriter : public PixelWriter
 public:
     using PixelWriter::PixelWriter;
     void writePixel(int x, int y, const PixelTrueColor &c) override;
-    void writeRect(int x, int y, int width, int height, const PixelTrueColor &c) override;
+    void drawRect(int x, int y, int width, int height, const PixelTrueColor &c) override;
+    void writeRectWithFill(int x, int y, int width, int height, const PixelTrueColor &c) override;
 };
 
 /**
@@ -90,5 +112,6 @@ class BGRResv8BitPerColorPixelWriter : public PixelWriter
 public:
     using PixelWriter::PixelWriter;
     void writePixel(int x, int y, const PixelTrueColor &c) override;
-    void writeRect(int x, int y, int width, int height, const PixelTrueColor &c) override;
+    void drawRect(int x, int y, int width, int height, const PixelTrueColor &c) override;
+    void writeRectWithFill(int x, int y, int width, int height, const PixelTrueColor &c) override;
 };
