@@ -4,6 +4,14 @@
 #include "frameBufferConfig.hpp"
 
 /**
+ * @brief 24ビットカラーの色を扱う
+ */
+struct PixelTrueColor
+{
+    uint8_t r, g, b;
+};
+
+/**
  * @brief RGBResv8BitColorで１ピクセル分の色データの作成
  *
  * FORMAT
@@ -29,14 +37,6 @@ constexpr uint32_t RGBResv8BitColorGen(const PixelTrueColor &c);
  * @return * constexpr uint32_t
  */
 constexpr uint32_t BGRResv8BitColorGen(const PixelTrueColor &c);
-
-/**
- * @brief 24ビットカラーの色を扱う
- */
-struct PixelTrueColor
-{
-    uint8_t r, g, b;
-};
 
 /**
  * @brief 画面の書き換えを行う基底クラス
