@@ -8,10 +8,14 @@
  */
 #include <cstdint>
 #include <cstdio>
+#include <cstdarg>
 #include "serial/serial.hpp"
 #include "graphics/frameBufferConfig.hpp"
 #include "graphics/pixelWriter.hpp"
 #include "font/font.hpp"
+#include "console/console.hpp"
+
+constexpr int BUF_SIZ = 1024;
 
 void Halt()
 {
@@ -33,6 +37,22 @@ void operator delete(void *buf) noexcept
 
 uint8_t pixelWriterBuf[sizeof(RGBResv8BitPerColorPixelWriter)];
 PixelWriter *pixelWriter;
+
+uint8_t consoleBuf[sizeof(Console)];
+Console *console;
+
+// カーネルからの出力
+int printk(const char *c, ...)
+{
+    va_list ap;
+    va_start(ap, c);
+
+    char buf[BUF_SIZ];
+    int result = vsnprintf(buf, BUF_SIZ, c, ap);
+
+    console->puts(buf);
+    return result;
+}
 
 /**
  * @brief カーネルのmain関数
@@ -58,6 +78,8 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
         break;
     }
 
+    console = new (consoleBuf) Console(*pixelWriter, {0, 0, 0}, {0xff, 0xff, 0xff});
+
     for (int x = 0; x < frameBufferConfig.widthResolution; x++)
     {
         for (int y = 0; y < frameBufferConfig.heightResolution; y++)
@@ -74,11 +96,16 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
         }
     }
 
-    writeString(*pixelWriter, 5, 3, "hotaruOS  File  Edit  View  Label  Special", {0x0, 0x0, 0x0});
+    // writeString(*pixelWriter, 5, 3, "hotaruOS  File  Edit  View  Label  Special", {0x0, 0x0, 0x0});
 
     char buf[256];
     snprintf(buf, 256, "1 + 2 = %d", 3);
     writeString(*pixelWriter, 0, 200, buf, {0, 0, 0});
+
+    for (size_t i = 0; i < 200; i++)
+    {
+        printk("line: %d test", i);
+    }
 
     Halt();
 }
