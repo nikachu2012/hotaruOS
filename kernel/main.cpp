@@ -18,11 +18,21 @@
 
 constexpr int BUF_SIZ = 1024;
 
+uint8_t pixelWriterBuf[sizeof(RGBResv8BitPerColorPixelWriter)];
+PixelWriter *pixelWriter;
+
+uint8_t consoleBuf[sizeof(Console)];
+Console *console;
+
 void Halt()
 {
     while (true)
         __asm__("hlt");
 }
+
+static const PixelTrueColor s_desktopTextColor = {0xff, 0xff, 0xff};
+static const PixelTrueColor s_desktopBgColor = {0x51, 0x5c, 0x6b};
+static const PixelTrueColor s_desktopTopBarColor = {0x33, 0x33, 0x33};
 
 // クラスをbufで指定された場所に置く (配置new)
 // newの前に自動でコンストラクタの呼び出しが挿入される
@@ -36,12 +46,6 @@ void operator delete(void *buf) noexcept
 {
 }
 
-uint8_t pixelWriterBuf[sizeof(RGBResv8BitPerColorPixelWriter)];
-PixelWriter *pixelWriter;
-
-uint8_t consoleBuf[sizeof(Console)];
-Console *console;
-
 // カーネルからの出力
 int printk(const char *c, ...)
 {
@@ -51,6 +55,8 @@ int printk(const char *c, ...)
     char buf[BUF_SIZ];
     int result = vsnprintf(buf, BUF_SIZ, c, ap);
 
+    serialPutString(buf, PORT_COM1);
+    serialPutString("\r\n", PORT_COM1);
     console->puts(buf);
     return result;
 }
@@ -60,14 +66,13 @@ int printk(const char *c, ...)
  */
 extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
 {
+    // init serial
     if (serialInit(PORT_COM1))
     {
         Halt();
     }
 
-    const char *str = "\r\nThis is kernel...\r\nhotaruOS Kernel by nikachu2012\r\n";
-    serialPutString(str, PORT_COM1);
-
+    // init graphics
     switch (frameBufferConfig.pixelFormat)
     {
     case PixelFormat_BGRResv8BitPerColor:
@@ -78,25 +83,17 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
     default:
         break;
     }
+    // init console
+    console = new (consoleBuf) Console(*pixelWriter, s_desktopTextColor, s_desktopBgColor, 0, FONT_HEIGHT + 6);
 
-    console = new (consoleBuf) Console(*pixelWriter, {0, 0, 0}, {0xff, 0xff, 0xff});
+    // draw Background
+    pixelWriter->drawRectWithFill(0, 0, frameBufferConfig.widthResolution, frameBufferConfig.heightResolution, s_desktopBgColor);
 
-    pixelWriter->drawRectWithFill(0, 0, frameBufferConfig.widthResolution, frameBufferConfig.heightResolution, {0, 0xff, 0});
-    pixelWriter->drawRectWithFill(100, 100, 200, 100, {0xdc, 0xdc, 0xdc});
+    // top bar
+    pixelWriter->drawRectWithFill(0, 0, frameBufferConfig.widthResolution, FONT_HEIGHT + 5, s_desktopTopBarColor);
+    writeString(*pixelWriter, 8, 3, "hotaruOS  Application  Development  Help", s_desktopTextColor);
 
-    // writeString(*pixelWriter, 5, 3, "hotaruOS  File  Edit  View  Label  Special", {0x0, 0x0, 0x0});
-
-    char buf[256];
-    snprintf(buf, 256, "1 + 2 = %d", 3);
-    writeString(*pixelWriter, 0, 200, buf, {0, 0, 0});
-
-    for (size_t i = 0; i < 200; i++)
-    {
-        printk("line: %d test", i);
-    }
-
-    pixelWriter->drawRect(99, 99, 25 * 7 + 1, 12 * 13 + 1, {0xff, 0, 0});
-
+    printk("hotaruOS build ???? by nikachu2012 \nshhh.... let's not leak our hard work");
     pixelWriter->drawImageRGBA(300, 600, cursorData, cursorDataWidth, cursorDataHeight);
     Halt();
 }
