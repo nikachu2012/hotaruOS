@@ -18,7 +18,7 @@ private:
     void lineBreak();
 
     PixelWriter &writer_;
-    const PixelTrueColor textColor_, bgColor_;
-    char buf_[s_consoleColumn][s_consoleRow + 1];
-    int cursorRow_, cursorColumn_;
+    const PixelTrueColor m_textColor, m_bgColor;
+    char m_buf[s_consoleColumn][s_consoleRow + 1];
+    int m_cursorRow, m_cursorColumn;
 };
