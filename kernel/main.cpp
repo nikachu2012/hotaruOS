@@ -14,6 +14,7 @@
 #include "graphics/pixelWriter.hpp"
 #include "font/font.hpp"
 #include "console/console.hpp"
+#include "cursorImage.cpp"
 
 constexpr int BUF_SIZ = 1024;
 
@@ -96,5 +97,6 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
 
     pixelWriter->drawRect(99, 99, 25 * 7 + 1, 12 * 13 + 1, {0xff, 0, 0});
 
+    pixelWriter->drawImageRGBA(300, 600, cursorData, cursorDataWidth, cursorDataHeight);
     Halt();
 }
