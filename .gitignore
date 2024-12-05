@@ -5,3 +5,5 @@ workspace/
 *.elf
 
 tools/*/.venv
+
+*.d
