@@ -4,11 +4,19 @@
 #include "frameBufferConfig.hpp"
 
 /**
- * @brief 24ビットカラーの色を扱う
+ * @brief 24ビットカラーを扱う
  */
 struct PixelTrueColor
 {
     uint8_t r, g, b;
+};
+
+/**
+ * @brief アルファチャンネル付き24ビットカラーを扱う
+ */
+struct PixelRGBA
+{
+    uint8_t r, g, b, a;
 };
 
 /**
@@ -88,6 +96,17 @@ public:
      */
     virtual void writeRectWithFill(int x, int y, int width, int height, const PixelTrueColor &c) = 0;
 
+    /**
+     * @brief RGBAの画像を出力する関数
+     *
+     * @param x 出力する座標
+     * @param y 出力する座標
+     * @param i 画像ピクセルの１次元配列
+     * @param width 画像の横幅
+     * @param height 画像の縦幅
+     */
+    virtual void drawImageRGBA(int x, int y, const PixelRGBA *i, int width, int height) = 0;
+
 protected:
     const frameBufferConfig &config_;
 };
@@ -102,6 +121,7 @@ public:
     void writePixel(int x, int y, const PixelTrueColor &c) override;
     void drawRect(int x, int y, int width, int height, const PixelTrueColor &c) override;
     void writeRectWithFill(int x, int y, int width, int height, const PixelTrueColor &c) override;
+    void drawImageRGBA(int x, int y, const PixelRGBA *i, int width, int height) override;
 };
 
 /**
@@ -114,4 +134,5 @@ public:
     void writePixel(int x, int y, const PixelTrueColor &c) override;
     void drawRect(int x, int y, int width, int height, const PixelTrueColor &c) override;
     void writeRectWithFill(int x, int y, int width, int height, const PixelTrueColor &c) override;
+    void drawImageRGBA(int x, int y, const PixelRGBA *i, int width, int height) override;
 };

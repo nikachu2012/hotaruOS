@@ -5,7 +5,17 @@ constexpr uint32_t RGBResv8BitColorGen(const PixelTrueColor &c)
     return (c.b << 16) | (c.g << 8) | c.r;
 }
 
+constexpr uint32_t RGBResv8BitColorGen(const PixelRGBA &c)
+{
+    return (c.b << 16) | (c.g << 8) | c.r;
+}
+
 constexpr uint32_t BGRResv8BitColorGen(const PixelTrueColor &c)
+{
+    return (c.r << 16) | (c.g << 8) | c.b;
+}
+
+constexpr uint32_t BGRResv8BitColorGen(const PixelRGBA &c)
 {
     return (c.r << 16) | (c.g << 8) | c.b;
 }
@@ -64,6 +74,22 @@ void RGBResv8BitPerColorPixelWriter::writeRectWithFill(int x, int y, int width, 
     }
 }
 
+void RGBResv8BitPerColorPixelWriter::drawImageRGBA(int x, int y, const struct PixelRGBA *i, int width, int height)
+{
+    for (size_t dy = 0; dy < height; dy++)
+    {
+        auto startptr = config_.frameBuffer + (config_.pixelPerScanLine * (y + dy) + x);
+
+        for (size_t dx = 0; dx < width; dx++)
+        {
+            if (i[width * dy + dx].a == 0)
+                continue;
+
+            startptr[dx] = RGBResv8BitColorGen(i[width * dy + dx]);
+        }
+    }
+}
+
 void BGRResv8BitPerColorPixelWriter::writePixel(int x, int y, const PixelTrueColor &c)
 {
     auto p = config_.frameBuffer + (config_.pixelPerScanLine * y + x);
@@ -87,6 +113,22 @@ void BGRResv8BitPerColorPixelWriter::writeRectWithFill(int x, int y, int width, 
         for (size_t dx = 0; dx < width; dx++)
         {
             startptr[dx] = color;
+        }
+    }
+}
+
+void BGRResv8BitPerColorPixelWriter::drawImageRGBA(int x, int y, const PixelRGBA *i, int width, int height)
+{
+    for (size_t dy = 0; dy < height; dy++)
+    {
+        auto startptr = config_.frameBuffer + (config_.pixelPerScanLine * (y + dy) + x);
+
+        for (size_t dx = 0; dx < width; dx++)
+        {
+            if (i[width * dy + dx].a == 0)
+                continue;
+
+            startptr[dx] = BGRResv8BitColorGen(i[width * dy + dx]);
         }
     }
 }
