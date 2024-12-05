@@ -42,7 +42,7 @@ void Console::lineBreak()
         memset(buf_[s_consoleColumn - 1], 0, s_consoleRow + 1);
 
         // 画面をきれいにする
-        writer_.writeRectWithFill(s_startPosX, s_startPosY, s_consoleRow * FONT_WIDTH, s_consoleColumn * FONT_HEIGHT, bgColor_);
+        writer_.drawRectWithFill(s_startPosX, s_startPosY, s_consoleRow * FONT_WIDTH, s_consoleColumn * FONT_HEIGHT, bgColor_);
 
         // 再描画
         for (size_t y = 0; y < s_consoleColumn - 1; y++)

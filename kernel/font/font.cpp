@@ -20,7 +20,7 @@ void writeChar(PixelWriter &writer, int x, int y, char c, const PixelTrueColor &
         {
             if ((font_bitmap[dy] << dx) & 0x40u)
             {
-                writer.writePixel(x + dx, y + dy, color);
+                writer.drawPixel(x + dx, y + dy, color);
             }
         }
     }

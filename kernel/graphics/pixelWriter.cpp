@@ -47,7 +47,7 @@ constexpr void drawRectBase(frameBufferConfig config, int x, int y, int width, i
     }
 }
 
-void RGBResv8BitPerColorPixelWriter::writePixel(int x, int y, const PixelTrueColor &c)
+void RGBResv8BitPerColorPixelWriter::drawPixel(int x, int y, const PixelTrueColor &c)
 {
     auto p = config_.frameBuffer + (config_.pixelPerScanLine * y + x);
 
@@ -60,7 +60,7 @@ void RGBResv8BitPerColorPixelWriter::drawRect(int x, int y, int width, int heigh
     drawRectBase(config_, x, y, width, height, color);
 }
 
-void RGBResv8BitPerColorPixelWriter::writeRectWithFill(int x, int y, int width, int height, const PixelTrueColor &c)
+void RGBResv8BitPerColorPixelWriter::drawRectWithFill(int x, int y, int width, int height, const PixelTrueColor &c)
 {
     auto color = RGBResv8BitColorGen(c);
 
@@ -90,7 +90,7 @@ void RGBResv8BitPerColorPixelWriter::drawImageRGBA(int x, int y, const struct Pi
     }
 }
 
-void BGRResv8BitPerColorPixelWriter::writePixel(int x, int y, const PixelTrueColor &c)
+void BGRResv8BitPerColorPixelWriter::drawPixel(int x, int y, const PixelTrueColor &c)
 {
     auto p = config_.frameBuffer + (config_.pixelPerScanLine * y + x);
 
@@ -103,7 +103,7 @@ void BGRResv8BitPerColorPixelWriter::drawRect(int x, int y, int width, int heigh
     drawRectBase(config_, x, y, width, height, color);
 }
 
-void BGRResv8BitPerColorPixelWriter::writeRectWithFill(int x, int y, int width, int height, const PixelTrueColor &c)
+void BGRResv8BitPerColorPixelWriter::drawRectWithFill(int x, int y, int width, int height, const PixelTrueColor &c)
 {
     auto color = BGRResv8BitColorGen(c);
 
