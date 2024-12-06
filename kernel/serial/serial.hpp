@@ -2,19 +2,10 @@
 
 #include <cstdint>
 #include <cstddef>
+#include "../native/io.hpp"
 
 #define PORT_COM1 0x3f8 // COM1
 #define PORT_COM2 0x2f8 // COM2
-
-/**
- * 指定されたIOポートに8bit値を出力
- */
-void outb(uint16_t port, uint8_t data);
-
-/**
- * 指定されたIOポートから8bit値を入力
- */
-uint8_t inb(uint16_t port);
 
 /**
  * シリアルポートの準備

@@ -1,27 +1,5 @@
 #include "serial.hpp"
 
-void outb(uint16_t port, uint8_t data)
-{
-    // out %al, %dx
-    // al -> dx
-    asm("out %b0, %w1"
-        :
-        : "a"(data), "d"(port));
-}
-
-uint8_t inb(uint16_t port)
-{
-    uint8_t data;
-
-    // in %dx, %al
-    // dx -> al
-    asm("in %w1, %b0"
-        : "=a"(data)
-        : "d"(port));
-
-    return data;
-}
-
 int serialInit(const uint16_t port)
 {
     // https://wiki.osdev.org/Serial_Ports
