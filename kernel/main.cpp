@@ -14,7 +14,7 @@
 #include "graphics/pixelWriter.hpp"
 #include "font/font.hpp"
 #include "console/console.hpp"
-#include "cursorImage.cpp"
+#include "cursorImage.hpp"
 #include "native/io.hpp"
 #include "pci/pci.hpp"
 
@@ -64,7 +64,7 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
     // init serial
     if (serialInit(PORT_COM1))
     {
-        Halt();
+        // Halt();
     }
 
     // init graphics
@@ -100,6 +100,31 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
         auto d = Pci::m_devices[i];
         printk("%d, %d, %d: Device ID: 0x%04x, Vendor: 0x%04x, Class %02x%02x%02x, Header 0x%02x", d.bus, d.device, d.function, d.deviceID, d.vendorID, d.classCode.baseClass, d.classCode.subClass, d.classCode.interface, d.headerType);
     }
+
+    // search xHC
+    Pci::Device *xhc = nullptr;
+
+    for (size_t i = 0; i < Pci::m_deviceCount; i++)
+    {
+        if (Pci::m_devices[i].classCode.match({0x0cu, 0x03u, 0x30u}))
+        {
+            // is device xHCI
+            xhc = &Pci::m_devices[i];
+
+            if (Pci::m_devices[i].vendorID == 0x8086)
+            {
+                // is vendor Intel
+                break;
+            }
+        }
+    }
+
+    if (xhc)
+    {
+        printk("xHC: %d, %d, %d", xhc->bus, xhc->device, xhc->function);
+    }
+    else
+        printk("xHC is not found");
 
     Halt();
 }
