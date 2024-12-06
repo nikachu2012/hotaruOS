@@ -15,6 +15,8 @@
 #include "font/font.hpp"
 #include "console/console.hpp"
 #include "cursorImage.cpp"
+#include "native/io.hpp"
+#include "pci/pci.hpp"
 
 constexpr int BUF_SIZ = 1024;
 
@@ -33,13 +35,6 @@ void Halt()
 static const PixelTrueColor s_desktopTextColor = {0xff, 0xff, 0xff};
 static const PixelTrueColor s_desktopBgColor = {0x51, 0x5c, 0x6b};
 static const PixelTrueColor s_desktopTopBarColor = {0x33, 0x33, 0x33};
-
-// クラスをbufで指定された場所に置く (配置new)
-// newの前に自動でコンストラクタの呼び出しが挿入される
-void *operator new(size_t size, void *buf)
-{
-    return buf;
-}
 
 // リンク時にエラーが出るため追加
 void operator delete(void *buf) noexcept
@@ -95,5 +90,14 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
 
     printk("hotaruOS build ???? by nikachu2012 \nshhh.... let's not leak our hard work");
     pixelWriter->drawImageRGBA(300, 600, cursorData, cursorDataWidth, cursorDataHeight);
+
+    Pci::scanAllBus();
+
+    for (size_t i = 0; i < Pci::m_deviceCount; i++)
+    {
+        auto d = Pci::m_devices[i];
+        printk("%d, %d, %d: Device ID: 0x%04x, Vendor: 0x%04x, Class %02x%02x%02x, Header 0x%02x", d.bus, d.device, d.function, d.deviceID, d.vendorID, d.classCode.baseClass, d.classCode.subClass, d.classCode.interface, d.headerType);
+    }
+
     Halt();
 }
