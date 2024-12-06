@@ -9,7 +9,7 @@
 class Console
 {
 public:
-    static const int s_consoleRow = 80, s_consoleColumn = 25;
+    static const int s_consoleRow = 180, s_consoleColumn = 60;
     Console(PixelWriter &writer, const PixelTrueColor &textColor, const PixelTrueColor &bgColor, const int x, const int y);
     void puts(const char *s);
 
