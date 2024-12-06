@@ -91,7 +91,9 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
     printk("hotaruOS build ???? by nikachu2012 \nshhh.... let's not leak our hard work");
     pixelWriter->drawImageRGBA(300, 600, cursorData, cursorDataWidth, cursorDataHeight);
 
-    Pci::scanAllBus();
+    // PCI scanAllBus
+    PciError status = Pci::scanAllBus();
+    printk("Pci::scanAllBus : %d", status);
 
     for (size_t i = 0; i < Pci::m_deviceCount; i++)
     {
