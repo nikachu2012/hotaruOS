@@ -22,7 +22,7 @@ sudo cp -rL $2/* mnt/
 
 sudo umount mnt
 
-qemu-system-x86_64 -bios OVMF.fd -drive format=raw,file=./hotaruOS_img.img -monitor stdio
+qemu-system-x86_64 -bios OVMF.fd -drive format=raw,file=./hotaruOS_img.img -monitor stdio -device qemu-xhci -device usb-mouse -device usb-kbd
 
 exit 0
 
