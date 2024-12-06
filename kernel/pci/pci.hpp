@@ -17,14 +17,8 @@ namespace Pci
     {
         uint8_t baseClass, subClass, interface;
 
-        bool operator==(const ClassCode &rhs) const
-        {
-            return (baseClass == rhs.baseClass &&
-                    subClass == rhs.subClass &&
-                    interface == rhs.interface);
-        }
+        bool match(const ClassCode &target);
     };
-
     struct Device
     {
         uint8_t bus, device, function;

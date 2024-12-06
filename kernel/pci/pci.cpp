@@ -40,13 +40,14 @@ PciError Pci::scanAllBus()
                     uint8_t subClass = (pciConfig_8 & 0x00ff0000u) >> 16;
                     uint8_t interface = (pciConfig_8 & 0x0000ff00u) >> 8;
 
-                    m_devices[m_deviceCount] = {static_cast<uint8_t>(busIndex),
-                                                static_cast<uint8_t>(deviceIndex),
-                                                static_cast<uint8_t>(functionIndex),
-                                                deviceID,
-                                                vendorID,
-                                                headerType,
-                                                {baseClass, subClass, interface}};
+                    m_devices[m_deviceCount] = {
+                        static_cast<uint8_t>(busIndex),
+                        static_cast<uint8_t>(deviceIndex),
+                        static_cast<uint8_t>(functionIndex),
+                        deviceID,
+                        vendorID,
+                        headerType,
+                        {baseClass, subClass, interface}};
 
                     m_deviceCount++;
                 }
@@ -55,4 +56,9 @@ PciError Pci::scanAllBus()
     }
 
     return PciError::Pci_Success;
+}
+
+bool Pci::ClassCode::match(const ClassCode &target)
+{
+    return target.baseClass == baseClass && target.subClass == subClass && target.interface == interface;
 }
