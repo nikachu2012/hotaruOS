@@ -42,7 +42,6 @@ $ make
 > ```bash
 > $ brew uninstall binutils
 > ```
-
 > https://stackoverflow.com/questions/77444892/xcode-15-0-1-macos-sonoma-clang-archive-or-linking-issue
 
 ### 標準ライブラリのダウンロード
