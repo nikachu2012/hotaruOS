@@ -41,6 +41,11 @@ void operator delete(void *buf) noexcept
 {
 }
 
+void operator delete(void *ptr, std::size_t size) noexcept
+{
+}
+
+
 // カーネルからの出力
 int printk(const char *c, ...)
 {
