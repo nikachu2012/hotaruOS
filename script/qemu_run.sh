@@ -10,19 +10,31 @@ fi
 
 IMG_SIZE="100M"
 IMG_FILENAME="hotaruOS_img.img"
+IMG_MOUNTPOINT="mnt"
 
 qemu-img create -f raw $IMG_FILENAME $IMG_SIZE
 mkfs.fat -n "HOTARU_OS" -s 2 -f 2 -R 32 -F 32 $IMG_FILENAME
 mkdir -p mnt 
-sudo mount -o loop $IMG_FILENAME mnt
+
+if [[ $(uname) =~ ^Darwin* ]]; then
+    # Macの場合
+    hdiutil attach -mountpoint $IMG_MOUNTPOINT $IMG_FILENAME
+else
+    sudo mount -o loop $IMG_FILENAME $IMG_MOUNTPOINT
+fi
 
 sudo mkdir -p mnt/efi/boot/
 sudo cp $1 mnt/efi/boot/bootx64.efi
 sudo cp -rL $2/* mnt/
 
-sudo umount mnt
+if [[ $(uname) =~ ^Darwin* ]]; then
+    # Macの場合
+    hdiutil detach $IMG_MOUNTPOINT
+else
+    sudo umount $IMG_MOUNTPOINT
+fi
 
-qemu-system-x86_64 -bios OVMF.fd -drive format=raw,file=./hotaruOS_img.img -monitor stdio -device qemu-xhci -device usb-mouse -device usb-kbd
+sudo qemu-system-x86_64 -bios OVMF.fd -drive format=raw,file=./$IMG_FILENAME -monitor stdio -device qemu-xhci -device usb-mouse -device usb-kbd
 
 exit 0
 
