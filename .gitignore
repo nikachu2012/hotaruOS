@@ -7,3 +7,6 @@ workspace/
 tools/*/.venv
 
 *.d
+
+# this is apple intelligence
+.DS_Store
