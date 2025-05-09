@@ -31,6 +31,20 @@ $ cd /path/to/edk2/BaseTools/Source/C
 $ make
 ```
 
+> [!NOTE]
+> macOS上でビルドを行う場合、macOSのバージョンによって以下のようなエラーでリンクに失敗します。  
+> ```
+> ld: archive member '/' not a mach-o file in '../libs/libCommon.a'
+> ```
+>
+> この場合は、homebrewからインストールされたGNU binutilsの削除で治るかもしれません。
+>
+> ```bash
+> $ brew uninstall binutils
+> ```
+
+> https://stackoverflow.com/questions/77444892/xcode-15-0-1-macos-sonoma-clang-archive-or-linking-issue
+
 ### 標準ライブラリのダウンロード
 以下のコマンドでビルド済みの標準ライブラリをダウンロードし、展開する
 ```bash
