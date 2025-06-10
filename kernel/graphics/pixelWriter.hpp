@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstddef>
 #include "frameBufferConfig.hpp"
+#include <cstddef>
 
 /**
  * @brief 24ビットカラーを扱う
@@ -51,19 +51,31 @@ constexpr uint32_t BGRResv8BitColorGen(const PixelTrueColor &c);
  */
 class PixelWriter
 {
-public:
+  public:
     /**
      * @brief Construct a new Pixel Writer object
      *
      * @param config
      */
-    PixelWriter(const frameBufferConfig &config) : config_{config} {}
+    PixelWriter(const frameBufferConfig &config) : config_{config}
+    {
+    }
 
     /**
      * @brief Destroy the Pixel Writer object
      *
      */
     virtual ~PixelWriter() = default;
+
+    int getDisplayWidth()
+    {
+        return config_.widthResolution;
+    }
+
+    int getDisplayHeight()
+    {
+        return config_.heightResolution;
+    }
 
     /**
      * @brief 指定座標の色を書き換える
@@ -107,7 +119,7 @@ public:
      */
     virtual void drawImageRGBA(int x, int y, const PixelRGBA *i, int width, int height) = 0;
 
-protected:
+  protected:
     const frameBufferConfig &config_;
 };
 
@@ -116,7 +128,7 @@ protected:
  */
 class RGBResv8BitPerColorPixelWriter : public PixelWriter
 {
-public:
+  public:
     using PixelWriter::PixelWriter;
     void drawPixel(int x, int y, const PixelTrueColor &c) override;
     void drawRect(int x, int y, int width, int height, const PixelTrueColor &c) override;
@@ -129,7 +141,7 @@ public:
  */
 class BGRResv8BitPerColorPixelWriter : public PixelWriter
 {
-public:
+  public:
     using PixelWriter::PixelWriter;
     void drawPixel(int x, int y, const PixelTrueColor &c) override;
     void drawRect(int x, int y, int width, int height, const PixelTrueColor &c) override;
