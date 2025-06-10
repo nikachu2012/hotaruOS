@@ -6,17 +6,17 @@
  * @date 2024-12-01
  *
  */
-#include <cstdint>
-#include <cstdio>
-#include <cstdarg>
-#include "serial/serial.hpp"
+#include "console/console.hpp"
+#include "font/font.hpp"
 #include "graphics/frameBufferConfig.hpp"
 #include "graphics/pixelWriter.hpp"
-#include "font/font.hpp"
-#include "console/console.hpp"
-#include "cursorImage.hpp"
-#include "native/io.hpp"
+#include "mouse/cursor.hpp"
+#include "mouse/mouse.hpp"
 #include "pci/pci.hpp"
+#include "serial/serial.hpp"
+#include <cstdarg>
+#include <cstdint>
+#include <cstdio>
 
 constexpr int BUF_SIZ = 1024;
 
@@ -26,11 +26,7 @@ PixelWriter *pixelWriter;
 uint8_t consoleBuf[sizeof(Console)];
 Console *console;
 
-void Halt()
-{
-    while (true)
-        __asm__("hlt");
-}
+
 
 static const PixelTrueColor s_desktopTextColor = {0xff, 0xff, 0xff};
 static const PixelTrueColor s_desktopBgColor = {0x51, 0x5c, 0x6b};
@@ -61,6 +57,13 @@ int printk(const char *c, ...)
     return result;
 }
 
+void Halt()
+{
+    printk("Halting...");
+    while (true)
+        __asm__("hlt");
+}
+
 /**
  * @brief カーネルのmain関数
  */
@@ -87,14 +90,21 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
     console = new (consoleBuf) Console(*pixelWriter, s_desktopTextColor, s_desktopBgColor, 0, FONT_HEIGHT + 6);
 
     // draw Background
-    pixelWriter->drawRectWithFill(0, 0, frameBufferConfig.widthResolution, frameBufferConfig.heightResolution, s_desktopBgColor);
+    pixelWriter->drawRectWithFill(0, 0, frameBufferConfig.widthResolution, frameBufferConfig.heightResolution,
+                                  s_desktopBgColor);
 
     // top bar
     pixelWriter->drawRectWithFill(0, 0, frameBufferConfig.widthResolution, FONT_HEIGHT + 5, s_desktopTopBarColor);
     writeString(*pixelWriter, 8, 3, "hotaruOS  Application  Development  Help", s_desktopTextColor);
 
+    // init mouse
+    MouseCursor cursor(pixelWriter, s_desktopBgColor, 10, 10);
+    MousePS2::reset();
+    MousePS2::setSampleRate();
+    printk("Mouse is resetted.");
+
     printk("hotaruOS build ???? by nikachu2012 \nshhh.... let's not leak our hard work");
-    pixelWriter->drawImageRGBA(300, 600, cursorData, cursorDataWidth, cursorDataHeight);
+    // pixelWriter->drawImageRGBA(300, 600, cursorData, cursorDataWidth, cursorDataHeight);
 
     // PCI scanAllBus
     PciError status = Pci::scanAllBus();
@@ -103,7 +113,9 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
     for (size_t i = 0; i < Pci::m_deviceCount; i++)
     {
         auto d = Pci::m_devices[i];
-        printk("%d, %d, %d: Device ID: 0x%04x, Vendor: 0x%04x, Class %02x%02x%02x, Header 0x%02x", d.bus, d.device, d.function, d.deviceID, d.vendorID, d.classCode.baseClass, d.classCode.subClass, d.classCode.interface, d.headerType);
+        printk("%d, %d, %d: Device ID: 0x%04x, Vendor: 0x%04x, Class %02x%02x%02x, Header 0x%02x", d.bus, d.device,
+               d.function, d.deviceID, d.vendorID, d.classCode.baseClass, d.classCode.subClass, d.classCode.interface,
+               d.headerType);
     }
 
     // search xHC
@@ -130,6 +142,11 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
     }
     else
         printk("xHC is not found");
+
+    while (true)
+    {
+        MousePS2::process(cursor);
+    }
 
     Halt();
 }

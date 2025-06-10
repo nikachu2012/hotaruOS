@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/pixelWriter.hpp"
+#include "../graphics/pixelWriter.hpp"
 
 const int cursorDataWidth = 13;
 const int cursorDataHeight = 24;
