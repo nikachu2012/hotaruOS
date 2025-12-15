@@ -52,6 +52,15 @@ void RGBResv8BitPerColorPixelWriter::drawRectWithFill(int x, int y, int width, i
 {
     auto color = RGBResv8BitColorGen(c);
 
+    if ((x + width) >= getDisplayWidth())
+    {
+        width = getDisplayWidth() - x;
+    }
+    if ((y + height) >= getDisplayHeight())
+    {
+        height = getDisplayHeight() - y;
+    }
+
     for (size_t dy = 0; dy < height; dy++)
     {
         auto startptr = config_.frameBuffer + getAddr(config_, x, y + dy);
@@ -64,12 +73,24 @@ void RGBResv8BitPerColorPixelWriter::drawRectWithFill(int x, int y, int width, i
 
 void RGBResv8BitPerColorPixelWriter::drawImageRGBA(int x, int y, const struct PixelRGBA *i, int width, int height)
 {
-    for (size_t dy = 0; dy < height; dy++)
+    int drawWidth = width, drawHeight = height;
+    // はみ出さないように
+    if ((x + width) >= getDisplayWidth())
+    {
+        drawWidth = getDisplayWidth() - x;
+    }
+    if ((y + height) >= getDisplayHeight())
+    {
+        drawHeight = getDisplayHeight() - y;
+    }
+
+    for (size_t dy = 0; dy < drawHeight; dy++)
     {
         auto startptr = config_.frameBuffer + (config_.pixelPerScanLine * (y + dy) + x);
 
-        for (size_t dx = 0; dx < width; dx++)
+        for (size_t dx = 0; dx < drawWidth; dx++)
         {
+            // アルファチャンネルの処理
             if (i[width * dy + dx].a == 0)
                 continue;
 
@@ -87,6 +108,16 @@ void BGRResv8BitPerColorPixelWriter::drawRect(int x, int y, int width, int heigh
 {
     auto color = RGBResv8BitColorGen(c);
 
+    // はみ出さないように
+    if ((x + width) >= getDisplayWidth())
+    {
+        width = getDisplayWidth() - x;
+    }
+    if ((y + height) >= getDisplayHeight())
+    {
+        height = getDisplayHeight() - y;
+    }
+
     // 上下
     for (size_t dx = 0; dx < width; dx++)
     {
@@ -95,6 +126,7 @@ void BGRResv8BitPerColorPixelWriter::drawRect(int x, int y, int width, int heigh
     }
 
     // 左右
+
     for (int dy = 0; dy < height; dy++)
     {
         config_.frameBuffer[getAddr(config_, x, y + dy)] = color;
@@ -105,6 +137,15 @@ void BGRResv8BitPerColorPixelWriter::drawRect(int x, int y, int width, int heigh
 void BGRResv8BitPerColorPixelWriter::drawRectWithFill(int x, int y, int width, int height, const PixelTrueColor &c)
 {
     auto color = BGRResv8BitColorGen(c);
+
+    if ((x + width) >= getDisplayWidth())
+    {
+        width = getDisplayWidth() - x;
+    }
+    if ((y + height) >= getDisplayHeight())
+    {
+        height = getDisplayHeight() - y;
+    }
 
     for (size_t dy = 0; dy < height; dy++)
     {
@@ -118,12 +159,24 @@ void BGRResv8BitPerColorPixelWriter::drawRectWithFill(int x, int y, int width, i
 
 void BGRResv8BitPerColorPixelWriter::drawImageRGBA(int x, int y, const PixelRGBA *i, int width, int height)
 {
-    for (size_t dy = 0; dy < height; dy++)
+    int drawWidth = width, drawHeight = height;
+    // はみ出さないように
+    if ((x + width) >= getDisplayWidth())
+    {
+        drawWidth = getDisplayWidth() - x;
+    }
+    if ((y + height) >= getDisplayHeight())
+    {
+        drawHeight = getDisplayHeight() - y;
+    }
+
+    for (size_t dy = 0; dy < drawHeight; dy++)
     {
         auto startptr = config_.frameBuffer + (config_.pixelPerScanLine * (y + dy) + x);
 
-        for (size_t dx = 0; dx < width; dx++)
+        for (size_t dx = 0; dx < drawWidth; dx++)
         {
+            // アルファチャンネルの処理
             if (i[width * dy + dx].a == 0)
                 continue;
 
