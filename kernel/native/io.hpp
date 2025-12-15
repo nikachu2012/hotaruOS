@@ -50,3 +50,8 @@ uint16_t inw(uint16_t port);
  * @return uint32_t 入力されたデータ
  */
 uint32_t indw(uint16_t port);
+
+/**
+ * @brief 1ms~4msほど待機
+ */
+void io_wait(void);

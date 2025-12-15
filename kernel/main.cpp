@@ -10,6 +10,8 @@
 #include "font/font.hpp"
 #include "graphics/frameBufferConfig.hpp"
 #include "graphics/pixelWriter.hpp"
+#include "interrupt/interrupt.hpp"
+#include "interrupt/pic.hpp"
 #include "mouse/cursor.hpp"
 #include "mouse/mouse.hpp"
 #include "pci/pci.hpp"
@@ -20,17 +22,18 @@
 
 constexpr int BUF_SIZ = 1024;
 
+static const PixelTrueColor s_desktopTextColor = {0xff, 0xff, 0xff};
+static const PixelTrueColor s_desktopBgColor = {0x51, 0x5c, 0x6b};
+static const PixelTrueColor s_desktopTopBarColor = {0x33, 0x33, 0x33};
+
 uint8_t pixelWriterBuf[sizeof(RGBResv8BitPerColorPixelWriter)];
 PixelWriter *pixelWriter;
 
 uint8_t consoleBuf[sizeof(Console)];
 Console *console;
 
-
-
-static const PixelTrueColor s_desktopTextColor = {0xff, 0xff, 0xff};
-static const PixelTrueColor s_desktopBgColor = {0x51, 0x5c, 0x6b};
-static const PixelTrueColor s_desktopTopBarColor = {0x33, 0x33, 0x33};
+uint8_t cursorBuf[sizeof(MouseCursor)];
+MouseCursor *cursor;
 
 // リンク時にエラーが出るため追加
 void operator delete(void *buf) noexcept
@@ -40,7 +43,6 @@ void operator delete(void *buf) noexcept
 void operator delete(void *ptr, std::size_t size) noexcept
 {
 }
-
 
 // カーネルからの出力
 int printk(const char *c, ...)
@@ -64,6 +66,13 @@ void Halt()
         __asm__("hlt");
 }
 
+__attribute__((interrupt)) void InterruptHandlerPS2Mouse(InterruptFrame *frame)
+{
+    MousePS2::process(*cursor);
+
+    Interrupt_PIC::endOfInterrupt(12);
+}
+
 /**
  * @brief カーネルのmain関数
  */
@@ -83,6 +92,7 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
         break;
     case PixelFormat_RGBResv8BitPerColor:
         pixelWriter = new (pixelWriterBuf) RGBResv8BitPerColorPixelWriter(frameBufferConfig);
+        break;
     default:
         break;
     }
@@ -97,8 +107,8 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
     pixelWriter->drawRectWithFill(0, 0, frameBufferConfig.widthResolution, FONT_HEIGHT + 5, s_desktopTopBarColor);
     writeString(*pixelWriter, 8, 3, "hotaruOS  Application  Development  Help", s_desktopTextColor);
 
-    // init mouse
-    MouseCursor cursor(pixelWriter, s_desktopBgColor, 10, 10);
+    // init mouse+cursor
+    cursor = new (cursorBuf) MouseCursor(pixelWriter, s_desktopBgColor, 10, 10);
     MousePS2::reset();
     MousePS2::setSampleRate();
     printk("Mouse is resetted.");
@@ -143,10 +153,25 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
     else
         printk("xHC is not found");
 
-    while (true)
-    {
-        MousePS2::process(cursor);
-    }
+    // 割り込みベクタの登録
+    const uint16_t codeSegment = GetCodeSegment();
+    // set mouse interrupt
+    SetIDTEntry(idt[12 + 0x20], CreateIDTAttr(DescriptorType::kInterruptGate, 0),
+                reinterpret_cast<uint64_t>(InterruptHandlerPS2Mouse), codeSegment);
+    // set timer interrupt
+    // SetIDTEntry(idt[0 + 0x20], CreateIDTAttr(DescriptorType::kInterruptGate, 0),
+    //             reinterpret_cast<uint64_t>(&TimerInterrupt), codeSegment);
+
+    IDTR idtr = {sizeof(idt) - 1, reinterpret_cast<uint64_t>(&idt[0])};
+    LoadIDT(&idtr);
+
+    Interrupt_PIC::remap();
+    // Interrupt_PIC::setMask(0);
+    Interrupt_PIC::enable(2);
+    Interrupt_PIC::enable(12);
+
+    __asm__ volatile("sti");
+
 
     Halt();
 }

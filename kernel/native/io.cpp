@@ -103,3 +103,8 @@ uint32_t indw(uint16_t port)
 
     return data;
 }
+
+void io_wait(void)
+{
+    outb(0x80, 0);
+}

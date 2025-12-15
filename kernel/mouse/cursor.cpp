@@ -25,7 +25,7 @@ void MouseCursor::moveAbsolute(int x, int y)
     if (y > pixelwriter_->getDisplayWidth())
         x_ = pixelwriter_->getDisplayWidth();
 
-    if (y < 0 )
+    if (y < 0)
         y_ = 0;
     if (y > pixelwriter_->getDisplayHeight())
         y_ = pixelwriter_->getDisplayHeight();
@@ -48,7 +48,7 @@ void MouseCursor::moveRelative(int dx, int dy)
     if (x_ > pixelwriter_->getDisplayWidth())
         x_ = pixelwriter_->getDisplayWidth();
 
-    if (y_ < 0 )
+    if (y_ < 0)
         y_ = 0;
     if (y_ > pixelwriter_->getDisplayHeight())
         y_ = pixelwriter_->getDisplayHeight();

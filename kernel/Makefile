@@ -1,7 +1,8 @@
 TARGET = kernel.elf
 
 SRCS = $(wildcard *.cpp **/*.cpp) 
-OBJS = $(patsubst %.cpp, %.o, $(SRCS)) ProggyClean.o
+ASMS = $(wildcard *.asm **/*.asm) 
+OBJS = $(patsubst %.cpp, %.o, $(SRCS)) $(patsubst %.asm, %.o, $(ASMS)) ProggyClean.o
 DEPS = $(patsubst %.cpp, %.d, $(SRCS))
 
 CXXFLAGS += -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone \
@@ -23,5 +24,8 @@ $(TARGET): $(OBJS)
 %.o: %.cpp
 	clang++ $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
+%.o: %.asm
+	nasm -f elf64 $< -o $@
+
 ProggyClean.o: ProggyClean.bin
-	objcopy -I binary -O elf64-x86-64 -B i386:x86-64 $< $@
+	llvm-objcopy -I binary -O elf64-x86-64 -B i386:x86-64 $< $@

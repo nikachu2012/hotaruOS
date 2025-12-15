@@ -75,6 +75,22 @@ void MousePS2::reset()
     while (inb(IO_REGISTER) != 0xaa)
         ;
 
+    // Get Compaq Status Byte
+    waitToWrite();
+    // send to mouse
+    outb(MousePS2::STATUS_REGISTER, 0x20);
+
+    waitToRead();
+    auto statusByte = inb(IO_REGISTER);
+    statusByte |= 0b10;
+    statusByte &= ~(1 << 5);
+
+    // Set Compaq Status
+    waitToWrite();
+    outb(MousePS2::STATUS_REGISTER, 0x60);
+    waitToWrite();
+    outb(MousePS2::IO_REGISTER, statusByte);
+
     printk("Enabling packet streaming...");
     // enable packet streaming
     sendToMouse(0xf4);
