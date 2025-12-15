@@ -11,7 +11,7 @@ constexpr uint8_t ACK = 0xfa;
 /**
  * @brief マウスが動いたか確認し動いていたらカーソルを移動させます
  */
- void process(MouseCursor &c);
+void process(MouseCursor &c);
 
 /**
  * @brief マウスをリセットします

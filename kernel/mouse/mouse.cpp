@@ -41,21 +41,30 @@ void MousePS2::process(MouseCursor &c)
     c.moveRelative(dx, dy);
 }
 
+inline void waitToWrite()
+{
+    while (inb(MousePS2::STATUS_REGISTER) & 0b10)
+        ;
+}
+
+inline void waitToRead()
+{
+    while (!(inb(MousePS2::STATUS_REGISTER) & 0b1))
+        ;
+}
+
 inline void sendToMouse(uint8_t d)
 {
     // wait allowed to send
-    while (inb(MousePS2::STATUS_REGISTER) & 0b10)
-        ;
+    waitToWrite();
     // send to mouse
     outb(MousePS2::STATUS_REGISTER, 0xd4);
 
     // wait allowed to send
-    while (inb(MousePS2::STATUS_REGISTER) & 0b10)
-        ;
+    waitToWrite();
     // send
     outb(MousePS2::IO_REGISTER, d);
 }
-
 
 void MousePS2::reset()
 {
@@ -72,6 +81,7 @@ void MousePS2::reset()
     printk("Waiting ACK...");
 
     // wait ACK
+    waitToWrite();
     while (inb(IO_REGISTER) != ACK)
         ;
 
@@ -82,12 +92,14 @@ void MousePS2::setSampleRate()
 {
     sendToMouse(0xF3);
     // wait ACK
+    waitToWrite();
     while (inb(IO_REGISTER) != ACK)
         ;
 
     // set sample rate is 40
     sendToMouse(40);
     // wait ACK
+    waitToWrite();
     while (inb(IO_REGISTER) != ACK)
         ;
 
