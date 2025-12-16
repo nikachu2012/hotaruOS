@@ -24,8 +24,3 @@ InterruptDescriptorAttribute CreateIDTAttr(DescriptorType type, uint8_t descript
     return attr;
 }
 
-void endOfInterrupt()
-{
-    volatile auto endOfInterruptAddr = reinterpret_cast<uint32_t *>(END_OF_INTERRUPT_REG);
-    *endOfInterruptAddr = 0;
-}

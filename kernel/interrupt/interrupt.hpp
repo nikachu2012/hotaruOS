@@ -2,7 +2,6 @@
 
 #include <cstdint>
 
-constexpr auto END_OF_INTERRUPT_REG = 0xfee000b0u;
 constexpr auto IDT_SIZE = 256;
 
 struct InterruptDescriptor;
@@ -51,16 +50,16 @@ struct InterruptFrame
     uint64_t ss;
 };
 
-struct IDTR {
+struct IDTR
+{
     uint16_t limit;
     uint64_t base;
 } __attribute__((packed));
 
 void SetIDTEntry(InterruptDescriptor &desc, InterruptDescriptorAttribute attr, uint64_t offset,
-                                uint16_t segmentSelector);
+                 uint16_t segmentSelector);
 InterruptDescriptorAttribute CreateIDTAttr(DescriptorType type, uint8_t descriptorPrivilegeLevel, bool present = true,
                                            uint8_t interruptStackTable = 0);
-__attribute__((no_caller_saved_registers)) void endOfInterrupt();
 
 // Assembly Function
 extern "C" void LoadIDT(IDTR *idtr);
