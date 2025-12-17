@@ -11,6 +11,7 @@
 #include "graphics/frameBufferConfig.hpp"
 #include "graphics/pixelWriter.hpp"
 #include "interrupt/interrupt.hpp"
+#include "interrupt/ioapic.hpp"
 #include "interrupt/pic.hpp"
 #include "mouse/cursor.hpp"
 #include "mouse/mouse.hpp"
@@ -71,6 +72,7 @@ __attribute__((interrupt)) void InterruptHandlerPS2Mouse(InterruptFrame *frame)
     MousePS2::process(*cursor);
 
     Interrupt_PIC::endOfInterrupt(12);
+    // Interrupt_IOAPIC::endOfInterrupt();
 }
 
 /**
@@ -155,23 +157,32 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
 
     // 割り込みベクタの登録
     const uint16_t codeSegment = GetCodeSegment();
-    // set mouse interrupt
-    SetIDTEntry(idt[12 + 0x20], CreateIDTAttr(DescriptorType::kInterruptGate, 0),
-                reinterpret_cast<uint64_t>(InterruptHandlerPS2Mouse), codeSegment);
-    // set timer interrupt
-    // SetIDTEntry(idt[0 + 0x20], CreateIDTAttr(DescriptorType::kInterruptGate, 0),
-    //             reinterpret_cast<uint64_t>(&TimerInterrupt), codeSegment);
-
     IDTR idtr = {sizeof(idt) - 1, reinterpret_cast<uint64_t>(&idt[0])};
     LoadIDT(&idtr);
 
+    // PICを用いたマウスの割り込み有効
+    SetIDTEntry(idt[12 + 0x20], CreateIDTAttr(DescriptorType::kInterruptGate, 0),
+                reinterpret_cast<uint64_t>(InterruptHandlerPS2Mouse), codeSegment);
     Interrupt_PIC::remap();
-    // Interrupt_PIC::setMask(0);
     Interrupt_PIC::enable(2);
     Interrupt_PIC::enable(12);
 
-    __asm__ volatile("sti");
+    // APICを用いたマウスの割り込み有効
+    // こちらを使う場合は割り込みハンドラ内のEnd of interruptの設定も変更が必要
 
+    // SetIDTEntry(idt[12 + 0x30], CreateIDTAttr(DescriptorType::kInterruptGate, 0),
+    //             reinterpret_cast<uint64_t>(InterruptHandlerPS2Mouse), codeSegment);
+    // Interrupt_IOAPIC::init();
+    // // bootstrap processor APIC ID
+    // const uint8_t bspLocalAPICID = *reinterpret_cast<uint32_t *>(0xfee00020) >> 24;
+
+    // Interrupt_IOAPIC::RedirectionTable mouse_tbl = {};
+    // mouse_tbl.bits.vector = 0x30 + 12;
+    // mouse_tbl.bits.destination = bspLocalAPICID;
+
+    // Interrupt_IOAPIC::addRedirectionTable(12, mouse_tbl);
+
+    __asm__ volatile("sti");
 
     Halt();
 }
