@@ -17,6 +17,8 @@
 #include "mouse/mouse.hpp"
 #include "pci/pci.hpp"
 #include "serial/serial.hpp"
+#include "utils/queue.hpp"
+#include <array>
 #include <cstdarg>
 #include <cstdint>
 #include <cstdio>
@@ -35,6 +37,20 @@ Console *console;
 
 uint8_t cursorBuf[sizeof(MouseCursor)];
 MouseCursor *cursor;
+
+struct Message
+{
+    enum Type
+    {
+        InterruptMouse
+    } type;
+};
+
+uint8_t mainQueueBuf[sizeof(ArrayQueue<Message>)];
+ArrayQueue<Message> *mainQueue;
+
+Message mainQueueData[100];
+// std::array<Message, 100> mainQueueData;
 
 // リンク時にエラーが出るため追加
 void operator delete(void *buf) noexcept
@@ -69,7 +85,7 @@ void Halt()
 
 __attribute__((interrupt)) void InterruptHandlerPS2Mouse(InterruptFrame *frame)
 {
-    MousePS2::process(*cursor);
+    mainQueue->push({Message::InterruptMouse});
 
     Interrupt_PIC::endOfInterrupt(12);
     // Interrupt_IOAPIC::endOfInterrupt();
@@ -100,6 +116,9 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
     }
     // init console
     console = new (consoleBuf) Console(*pixelWriter, s_desktopTextColor, s_desktopBgColor, 0, FONT_HEIGHT + 6);
+
+    // init Queue
+    mainQueue = new (mainQueue) ArrayQueue<Message>(mainQueueData, 100);
 
     // draw Background
     pixelWriter->drawRectWithFill(0, 0, frameBufferConfig.widthResolution, frameBufferConfig.heightResolution,
@@ -182,7 +201,33 @@ extern "C" void kernelMain(const frameBufferConfig &frameBufferConfig)
 
     // Interrupt_IOAPIC::addRedirectionTable(12, mouse_tbl);
 
-    __asm__ volatile("sti");
+    // イベントループ
+    while (true)
+    {
+        /* code */
+        __asm__("cli");
+
+        if (mainQueue->count() == 0)
+        {
+            __asm__("sti");
+            __asm__("hlt");
+        }
+
+        Message msg = mainQueue->get();
+        mainQueue->pop();
+        __asm__("sti");
+
+        switch (msg.type)
+        {
+        case Message::InterruptMouse:
+            MousePS2::process(*cursor);
+            break;
+
+        default:
+            printk("EventLoop: Undefined message type: %d", msg.type);
+            break;
+        }
+    }
 
     Halt();
 }
